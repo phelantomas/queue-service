@@ -35,22 +35,22 @@ class QueueServiceActor(orderApiService: OrderApiService, productApiService: Pro
         replyTo ! ActionPerformed(s"Following requests were added to queue: ${requests.uris}")
         queue(queryRequests.appended(requests))
       case GetCustomerDetails(replyTo) =>
-        val (orderRequests, productRequest) = splitRequests(queryRequests.flatMap(_.uris))
-        if (checkQueueCap(orderRequests, productRequest)) {
-
-          val orderResponses = Future.sequence(orderRequests.map(orderApiService.getOrderResponses))
-          val productResponses = Future.sequence(productRequest.map(productApiService.getProductResponses))
-
+        val (orderRequests, productRequests) = splitRequests(queryRequests.flatMap(_.uris))
+        if (checkQueueCap(orderRequests, productRequests)) {
+          val orderResponsesFuture = orderApiService.getOrderResponses(bulkRequests(orderRequests, orderApiPrefix))
+          val productResponsesFuture = productApiService.getProductResponses(bulkRequests(productRequests, productApiPrefix))
           val futureResponse = for {
-            orderResponses <- orderResponses
-            productResponses <- productResponses
+            orderResponses <- orderResponsesFuture
+            productResponses <- productResponsesFuture
           } yield {
-            Some(CustomerDetailsResponse(orderDetails = orderResponses.flatten.toMap, productDetails = productResponses.flatten.toMap))
+            Some(CustomerDetailsResponse(orderDetails = orderResponses, productDetails = productResponses))
           }
           replyTo ! futureResponse
           queue(Seq.empty)
         } else {
-          replyTo ! Future { None }
+          replyTo ! Future {
+            None
+          }
           Behaviors.same
         }
     }
@@ -64,5 +64,7 @@ class QueueServiceActor(orderApiService: OrderApiService, productApiService: Pro
     orderRequests.length > queueCap || productRequests.length > queueCap
   }
 
-  private def bulkRequests(requests: Seq[String], pattern: String): String = ???
+  private def bulkRequests(requests: Seq[String], apiPattern: String): String = {
+    s"""$apiPattern${requests.map(request => request.replace(apiPattern, "")).mkString(",")}"""
+  }
 }
