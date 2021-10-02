@@ -11,4 +11,9 @@ object Config {
     val host: String = http.getString("host")
     val port: Int = http.getInt("port")
   }
+
+  object Queue {
+    private val queue = config.getConfig("queuing-service.queue")
+    val cap: Int = queue.getInt("cap")
+  }
 }
