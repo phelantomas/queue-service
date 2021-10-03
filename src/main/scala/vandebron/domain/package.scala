@@ -9,4 +9,7 @@ package object domain {
 
   type CustomerNumber = String Refined CustomerNumberRegex
   object CustomerNumber extends RefinedTypeOps[CustomerNumber, String]
+
+  type CustomerOrderDetails = Map[String, String]
+  type CustomerProductDetails = Map[String, Seq[String]]
 }

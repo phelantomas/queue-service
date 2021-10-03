@@ -2,6 +2,7 @@ package vandebron.service
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
+import vandebron.domain.{CustomerOrderDetails, CustomerProductDetails}
 import vandebron.service.QueueServiceActor.{ActionPerformed, Command, Publish, Subscribe}
 
 import java.util.UUID
@@ -10,8 +11,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
 final case class HttpRequests(uris: Seq[String])
-
-final case class CustomerDetailsResponse(orderDetails: Map[String, String], productDetails: Map[String, Seq[String]])
+final case class CustomerDetailsResponse(orderDetails: CustomerOrderDetails, productDetails: CustomerProductDetails)
 
 object QueueServiceActor {
   sealed trait Command
