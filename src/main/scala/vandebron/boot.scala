@@ -5,7 +5,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.{Directives, Route}
 import vandebron.domain.queries.{OrderQuery, ProductQuery}
-import vandebron.http.{OrderRoute, ProductRoute, QueryRoute}
+import vandebron.http.{OrderRoute, ProductRoute, QueueRoute}
 import vandebron.repository.{RandomlyGeneratedOrderRepository, RandomlyGeneratedProductRepository}
 import vandebron.service.{OrderApiService, ProductApiService, QueueServiceActor}
 
@@ -38,10 +38,12 @@ object boot {
 
       val orderApiService = new OrderApiService()(context.system)
       val productApiService = new ProductApiService()(context.system)
-      val queueActor = context.spawn(new QueueServiceActor(orderApiService, productApiService)(context.executionContext).apply(), "QueueActor")
+      val queueActor = context.spawn(
+        new QueueServiceActor(orderApiService, productApiService, Config.Queue.interval, Config.Queue.cap)(context.executionContext).apply(), "QueueActor"
+      )
       context.watch(queueActor)
 
-      val queryRoutes = new QueryRoute(queueActor)(context.system)
+      val queryRoutes = new QueueRoute(queueActor, Config.Queue.duration)(context.system)
 
       val routes = Directives.concat(orderRoute.route, productRoute.route, queryRoutes.route)
       startHttpServer(routes)(context.system)
