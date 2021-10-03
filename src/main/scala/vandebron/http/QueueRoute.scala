@@ -11,7 +11,7 @@ import vandebron.service.{HttpRequests, QueueServiceActor}
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-class QueueRoute(queue: ActorRef[QueueServiceActor.Command], subscribeDuration: FiniteDuration)(implicit val system: ActorSystem[_]) extends BaseRoute {
+class QueueRoute(queue: ActorRef[QueueServiceActor.Command], subscribeDuration: FiniteDuration)(implicit val system: ActorSystem[_]) {
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   import vandebron.http.serialization.JsonFormats._
@@ -33,9 +33,7 @@ class QueueRoute(queue: ActorRef[QueueServiceActor.Command], subscribeDuration: 
 
   private def publishRequests: Route =
     entity(as[HttpRequests]) { req =>
-      complete {
-        publish(req)
-      }
+      complete { publish(req) }
     }
 
   private def subscribeResponses: Route =
